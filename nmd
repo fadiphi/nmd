@@ -1,38 +1,45 @@
 #! /bin/bash
-if [ ! -e "$HOME/bin/.nmd" ];then
-	mkdir "$HOME/bin/.nmd"
+
+if [ ! -e "$HOME/.nmd" ];then
+	mkdir "$HOME/.nmd"
 fi
 
-prefix="$HOME/bin/.nmd"
-cd $prefix
-rm all_networks nets_raw nets signal
+prefix="$HOME/.nmd"
+echo $prefix
+sleep 1
+
+for i in all_networks nets_raw nets signal;do 
+	if [ -e "$prefix/$i" ];then
+		rm "$prefix/$i"
+	fi
+done
 #file creation
-nmcli -t --fields SSID d wifi  > nets_raw
-nmcli -t --fields SIGNAL d wifi > signal 
+nmcli -t --fields SSID d wifi  > $prefix/nets_raw
+nmcli -t --fields SIGNAL d wifi > $prefix/signal 
 
-n=$(wc -l <nets_raw) #how many nets are there?
+n=$(wc -l <$prefix/nets_raw) #how many nets are there?
 
 for i in $(seq $n); do
-net="$(head -n $i nets_raw|tail -n 1|sed s,\ ,\[space\],g)"
-echo $net >>nets
+net="$(head -n $i $prefix/nets_raw|tail -n 1|sed s,\ ,\[space\],g)"
+echo $net >>$prefix/nets
 done
 
-echo  "SSID" "SIGNAL">all_networks.txt
+echo  "SSID" "SIGNAL">$prefix/all_networks.txt
 for i in $(seq $n); do
-net="$(head -n $i nets|tail -n 1)"
-signal="$(head -n $i signal|tail -n 1)"
+net="$(head -n $i $prefix/nets|tail -n 1)"
+signal="$(head -n $i $prefix/signal|tail -n 1)"
 
-echo "$net" "$signal">>all_networks
+echo "$net" "$signal">> $prefix/all_networks
 done
 
-sel_raw=$(dialog --stdout --menu "Select a network:" 30 60 $n $(less all_networks))
+sel_raw=$(dialog --stdout --menu "Select a network:" 30 60 $n $(less $prefix/all_networks))
 sel=$(echo $sel_raw|sed s,'\[space\]',\ ,g)
 echo "$sel"
 
-if [ ! -e $sel_raw.pass ]; then
+if [ ! -e $prefix/$sel_raw.pass ]; then
 #echo "dialog --stdout --inputbox "inserire una password per $sel" 10 50 > $sel_raw.pass"
-	dialog --stdout --inputbox "insert a password for $sel" 10 50 > $sel_raw.pass
+	dialog --stdout --inputbox "insert a password for $sel" 10 50 > $prefix/$sel_raw.pass
 fi
 echo "Connecting to $sel..."
 #clear
-nmcli d wifi connect "$sel" password $(less $sel_raw.pass)
+nmcli d wifi connect "$sel" password $(less $prefix/$sel_raw.pass)
