@@ -1,0 +1,33 @@
+#! /bin/bash
+rm all_networks nets_raw nets signal
+#file creation
+nmcli -t --fields SSID d wifi  > nets_raw
+nmcli -t --fields SIGNAL d wifi > signal 
+
+n=$(wc -l <nets_raw)
+#how many nets are there?
+
+for i in $(seq $n); do
+net="$(head -n $i nets_raw|tail -n 1|sed s,\ ,\[space\],g)"
+echo $net >>nets
+done
+
+echo  "SSID" "POWER">all_networks.txt
+for i in $(seq $n); do
+net="$(head -n $i nets|tail -n 1)"
+signal="$(head -n $i signal|tail -n 1)"
+
+echo "$net" "$signal">>all_networks
+done
+
+sel_raw=$(dialog --stdout --menu "Select a network:" 30 60 $n $(less all_networks))
+sel=$(echo $sel_raw|sed s,'\[space\]',\ ,g)
+echo "$sel"
+
+if [ ! -e $sel_raw.pass ]; then
+#echo "dialog --stdout --inputbox "inserire una password per $sel" 10 50 > $sel_raw.pass"
+	dialog --stdout --inputbox "inserire una password per $sel" 10 50 > $sel_raw.pass
+fi
+echo "Connessione a $sel"
+clear
+nmcli d wifi connect "$sel" password $(less $sel_raw.pass)
