@@ -5,8 +5,8 @@ if [ ! -e "$HOME/.nmd" ];then
 fi
 
 prefix="$HOME/.nmd"
-echo $prefix
-sleep 1
+#echo $prefix
+#sleep 1
 
 for i in all_networks nets_raw nets signal;do 
 	if [ -e "$prefix/$i" ];then
